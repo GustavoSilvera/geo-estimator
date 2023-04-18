@@ -17,7 +17,7 @@ if not (
     # whether or not we need to download the dataset
     download_pom(dataset_dir, num_images=-1)  # begin downloading dataset
 
-dataset = ImageDataset(dataset_dir)
+dataset = ImageDataset(dataset_dir, res=0.5) # tune im_scale to change resolution scale
 
 # examples
 image, xyz, gps = dataset[56]
