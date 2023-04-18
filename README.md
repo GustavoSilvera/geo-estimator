@@ -26,9 +26,6 @@ python main.py
 
 The data is now located in `dataset/` with ~10000 images from the 4'th viewpoint and with associated GPS coordinates in `dataset/coords.txt`. This is what we will use for our primary dataset (images + labels).
 
-## Converting the GPS location to a label
-### TODO
-
 ## To Google Colab (.ipynb)
 For ease of working in local Python files but uploading a submission via .ipynb, there is a helper script (`to_colab.py`) that you can run:
 ```sh
@@ -40,3 +37,8 @@ python to_colab.py
 # Reading input py file: "main"
 # Output .ipynb file to geo-estimator.ipynb
 ```
+
+
+## Acknowledgements
+- *Image Geo-localization based on Multiple Nearest Neighbor Feature Matching using Generalized Graphs*. Amir Roshan Zamir and Mubarak Shah. **IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)**, 2014.
+    - For their excellent dataset provided [here](https://www.crcv.ucf.edu/data/GMCP_Geolocalization/) ([README](http://www.cs.ucf.edu/~aroshan/index_files/Dataset_PitOrlManh/Readme.pdf))
