@@ -5,19 +5,36 @@ def download_pom(data_dir: str, view: int = 4):
     # view is either 1 (rear), 2 (right), 3 (left), 4(front), or 5(up)
     assert 1 <= view <= 5
 
-    import os
+    import os, subprocess
 
     # using PitOrlManh dataset from:
     # https://www.crcv.ucf.edu/data/GMCP_Geolocalization/#Dataset
     os.makedirs(data_dir, exist_ok=True)
     os.chdir(data_dir)
 
-    num_download: int = 10
+    num_download: int = 300  # total dataset is approx 10343
     # use simple single-threaded downloader like curl or wget
-    for i in range(num_download):
-        url: str = f"http://www.cs.ucf.edu/~aroshan/index_files/Dataset_PitOrlManh/images/{i:06d}_{view}.jpg"
-        os.system(f"wget {url}")
-        print(f"Finished downloading image {i}")
+    statuses = []
+
+    with open(os.devnull, "wb") as devnull:
+        for i in range(num_download):
+            url: str = f"http://www.cs.ucf.edu/~aroshan/index_files/Dataset_PitOrlManh/images/{i+1:06d}_{view}.jpg"
+            statuses.append(
+                subprocess.Popen(
+                    ["wget", url], stdout=devnull, stderr=subprocess.STDOUT
+                )
+            )
+            print(f"Starting downloading image {i}", end="\r", flush=True)
+    print()
+    for i, s in enumerate(statuses):
+        s.communicate()
+        print(
+            f"Completed download: {i} / {len(statuses)} ({100 * i / len(statuses):.2f}%)",
+            end="\r",
+            flush=True,
+        )
+    print()
+    os.system("rm wget-log.*")
 
     import scipy
     import numpy as np
