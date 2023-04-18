@@ -1,4 +1,31 @@
-def download_pom():
+def download_pom(view: int = 4):
+    # view is either 1 (rear), 2 (right), 3 (left), 4(front), or 5(up)
+    assert 1 <= view <= 5
+
+    import os
+
+    # using PitOrlManh dataset from:
+    # https://www.crcv.ucf.edu/data/GMCP_Geolocalization/#Dataset
+    data_dir: str = "dataset-jpg"
+    os.makedirs(data_dir, exist_ok=True)
+    os.chdir(data_dir)
+
+    num_download: int = 1000
+    # use simple single-threaded downloader like curl or wget
+    for i in range(num_download):
+        url: str = f"http://www.cs.ucf.edu/~aroshan/index_files/Dataset_PitOrlManh/images/{i:06d}_{view}.jpg"
+        os.system(f"wget {url}")
+        print(f"Finished downloading image {i}")
+
+    coords: str = "http://www.cs.ucf.edu/~aroshan/index_files/Dataset_PitOrlManh/#:~:text=Cartesian_Location_Coordinates.mat"
+    os.system(f"wget {coords}")  # download metadata for coordinates
+
+    os.chdir("..")  # back to main dir
+
+    print(f'Downloads successful in "{data_dir}"')
+
+
+def download_pom_raw():
     import os
 
     # using PitOrlManh dataset from:
