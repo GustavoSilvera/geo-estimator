@@ -4,6 +4,7 @@ files = [
     "utils",  # utilities (run first)
     "gsv_query",
     "pit_orl_manh",
+    "dataloader",
     "model",
     "main",
 ]
@@ -40,6 +41,6 @@ for c in nb.cells:
         non_empty_cells.append(c)
 nb.cells = non_empty_cells
 
-out:str = "geo-estimator.ipynb"
+out: str = "geo-estimator.ipynb"
 jupytext.write(nb, out, fmt=".ipynb")
 print(f"Output .ipynb file to {out}")

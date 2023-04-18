@@ -7,6 +7,8 @@ Its an AI for geo-guesser... give it an input image location and it'll estimate 
 Python requirements:
 ```python
 torch
+torchvision
+PIL
 numpy
 
 # optional
@@ -24,7 +26,7 @@ python main.py
 # downloads dataset (takes ~10m)
 ```
 
-The data is now located in `dataset/` with ~10000 images from the 4'th viewpoint and with associated GPS coordinates in `dataset/coords.txt`. This is what we will use for our primary dataset (images + labels).
+The image data is now located in `dataset/images/` with ~10000 images from the 4'th viewpoint and with associated XYZ and GPS metadata in `dataset/xyz_cartesian.txt` and `dataset/gps_compass.txt` respectively. This is what we will use for our primary dataset (images + metadata).
 
 ## To Google Colab (.ipynb)
 For ease of working in local Python files but uploading a submission via .ipynb, there is a helper script (`to_colab.py`) that you can run:
