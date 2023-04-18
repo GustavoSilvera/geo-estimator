@@ -37,5 +37,9 @@ print(m)
 ex_batch = m.sample_batch()
 # print(ex_batch)
 
-pred = m.forward(image)
+pred, _ = m.forward(image)
 print(pred)
+
+loss_train, loss_test = m.estimate_loss()
+print(f"loss train: {loss_train}")
+print(f"loss test: {loss_test}")
