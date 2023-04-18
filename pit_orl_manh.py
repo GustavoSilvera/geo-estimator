@@ -12,27 +12,32 @@ def download_pom(data_dir: str, view: int = 4):
     os.makedirs(data_dir, exist_ok=True)
     os.chdir(data_dir)
 
-    num_download: int = 300  # total dataset is approx 10343
+    num_download: int = 10000  # total dataset is approx 10343
     # use simple single-threaded downloader like curl or wget
     statuses = []
+    batch: int = 100  # number of parallel downloads at once
 
     with open(os.devnull, "wb") as devnull:
-        for i in range(num_download):
-            url: str = f"http://www.cs.ucf.edu/~aroshan/index_files/Dataset_PitOrlManh/images/{i+1:06d}_{view}.jpg"
-            statuses.append(
-                subprocess.Popen(
-                    ["wget", url], stdout=devnull, stderr=subprocess.STDOUT
+        cumulative = 0
+        for i in range(num_download // batch):
+            for b in range(batch):
+                idx = i * batch + b + 1
+                url: str = f"http://www.cs.ucf.edu/~aroshan/index_files/Dataset_PitOrlManh/images/{idx:06d}_{view}.jpg"
+                statuses.append(
+                    subprocess.Popen(
+                        ["wget", url], stdout=devnull, stderr=subprocess.STDOUT
+                    )
                 )
-            )
-            print(f"Starting downloading image {i}", end="\r", flush=True)
-    print()
-    for i, s in enumerate(statuses):
-        s.communicate()
-        print(
-            f"Completed download: {i} / {len(statuses)} ({100 * i / len(statuses):.2f}%)",
-            end="\r",
-            flush=True,
-        )
+                # print(f"Starting image {idx}", end="\r", flush=True)
+            for s in statuses:
+                s.communicate()
+                cumulative += 1
+                print(
+                    f"Completed download: {cumulative}/{num_download} ({100 * cumulative / num_download:.2f}%)",
+                    end="\r",
+                    flush=True,
+                )
+            statuses = []  # reset
     print()
     os.system("rm wget-log.*")
 
