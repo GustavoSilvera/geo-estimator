@@ -10,6 +10,8 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning)  # no more nasty torch warnings
 from torchvision import transforms
 
+from utils import device
+
 
 class ImageDataset(torch.utils.data.Dataset):
     def __init__(self, data_dir: str = None, res: float = 1):
@@ -48,7 +50,7 @@ class ImageDataset(torch.utils.data.Dataset):
         # im = (255 * im).type(torch.uint8)  # to uint8 to save memory (vs float32)
         # return image (tensor), tuple of cartesian coords (x, y, z), and tuple of GPS & compass (lat, long, compass)
         return (
-            im,
-            torch.from_numpy(self.xyz_cartesian[idx]),
-            torch.from_numpy(self.gps_compass[idx]),
+            im.to(device),
+            torch.from_numpy(self.xyz_cartesian[idx]).type(torch.float32).to(device),
+            torch.from_numpy(self.gps_compass[idx]).type(torch.float32).to(device),
         )

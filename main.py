@@ -5,6 +5,7 @@ from model import GeoGuesser
 from gsv_query import download_gsv
 from pit_orl_manh import download_pom
 from dataloader import ImageDataset
+from utils import device
 
 
 # load data
@@ -18,7 +19,6 @@ if not (
     download_pom(dataset_dir, num_images=-1)  # begin downloading dataset
 
 dataset = ImageDataset(dataset_dir, res=0.5)  # tune im_scale to change resolution scale
-
 # examples
 image, xyz, gps = dataset[0]  # happens to be all None!
 image, xyz, gps = dataset[56]  # non-None example
@@ -32,6 +32,7 @@ train = idxs[:test_train_split]
 test = idxs[test_train_split:]
 
 m = GeoGuesser(dataset, image.shape, train, test)
+m = m.to(device)
 print(m)
 
 ex_batch = m.sample_batch()
