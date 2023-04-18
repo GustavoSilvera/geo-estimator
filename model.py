@@ -1,6 +1,9 @@
 import torch
 
-from utils import device
+try:
+    from utils import device
+except:
+    pass  # already in global context
 
 
 class GeoGuesser(torch.nn.Module):
