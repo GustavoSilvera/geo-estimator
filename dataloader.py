@@ -37,13 +37,18 @@ class ImageDataset(torch.utils.data.Dataset):
     # given an image index, return the image itself as well as its associated metadata
     def __getitem__(
         self, idx: int, view: int = 4
-    ) -> Tuple[torch.Tensor, Tuple[float, float, float], Tuple[float, float, float]]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         assert 0 <= idx < self.dataset_size
         assert 0 <= view <= 5
         img_path: str = os.path.join(self.data_dir, "images", f"{idx:06d}_{view}.jpg")
         if not os.path.exists(img_path):
             return None, None, None
         im: torch.Tensor = self.to_tensor(self.resize_im(Image.open(img_path)))
-        im = (255 * im).type(torch.uint8)  # to uint8 to save memory (vs float32)
+        # can't compute gradients with uint8 :((
+        # im = (255 * im).type(torch.uint8)  # to uint8 to save memory (vs float32)
         # return image (tensor), tuple of cartesian coords (x, y, z), and tuple of GPS & compass (lat, long, compass)
-        return (im, tuple(self.xyz_cartesian[idx]), tuple(self.gps_compass[idx]))
+        return (
+            im,
+            torch.from_numpy(self.xyz_cartesian[idx]),
+            torch.from_numpy(self.gps_compass[idx]),
+        )
