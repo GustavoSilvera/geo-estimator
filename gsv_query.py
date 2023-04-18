@@ -1,12 +1,11 @@
 ### Function to download Google Street View images and metadata for use as a dataset of images and locations.
 
 
-def download_gsv():
+def download_gsv(data_dir:str):
     import os
     import numpy as np
     import google_streetview.api
 
-    data_dir: str = "data"
     os.makedirs(data_dir, exist_ok=True)
 
     np.random.seed(1)

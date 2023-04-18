@@ -1,7 +1,7 @@
 ### Function to download individual files from the PitOrlManh dataset from a particular view
 
 
-def download_pom(view: int = 4):
+def download_pom(data_dir: str, view: int = 4):
     # view is either 1 (rear), 2 (right), 3 (left), 4(front), or 5(up)
     assert 1 <= view <= 5
 
@@ -9,11 +9,10 @@ def download_pom(view: int = 4):
 
     # using PitOrlManh dataset from:
     # https://www.crcv.ucf.edu/data/GMCP_Geolocalization/#Dataset
-    data_dir: str = "dataset-jpg"
     os.makedirs(data_dir, exist_ok=True)
     os.chdir(data_dir)
 
-    num_download: int = 1000
+    num_download: int = 10
     # use simple single-threaded downloader like curl or wget
     for i in range(num_download):
         url: str = f"http://www.cs.ucf.edu/~aroshan/index_files/Dataset_PitOrlManh/images/{i:06d}_{view}.jpg"
@@ -21,11 +20,16 @@ def download_pom(view: int = 4):
         print(f"Finished downloading image {i}")
 
     import scipy
+    import numpy as np
 
     coord_file: str = "Cartesian_Location_Coordinates.mat"
-    coords: str = f"http://www.cs.ucf.edu/~aroshan/index_files/Dataset_PitOrlManh/#:~:text={coord_file}"
+    coords: str = (
+        f"http://www.cs.ucf.edu/~aroshan/index_files/Dataset_PitOrlManh/{coord_file}"
+    )
     os.system(f"wget {coords}")  # download metadata for coordinates
     mat = scipy.io.loadmat(coord_file)
+    np.savetxt("coords.txt", mat["XYZ_Cartesian"])  # indices match with image index
+    os.system(f"rm {coord_file}")  # gross matlab file ew
 
     os.chdir("..")  # back to main dir
 
@@ -35,12 +39,11 @@ def download_pom(view: int = 4):
 ### Function to download the entire PitOrlManh dataset (~50Gb)
 
 
-def download_pom_raw():
+def download_pom_raw(data_dir: str):
     import os
 
     # using PitOrlManh dataset from:
     # https://www.crcv.ucf.edu/data/GMCP_Geolocalization/#Dataset
-    data_dir: str = "dataset"
     os.makedirs(data_dir, exist_ok=True)
     os.chdir(data_dir)
     urls = [

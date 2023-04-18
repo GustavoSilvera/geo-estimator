@@ -1,5 +1,6 @@
 # geo-guesser-ai
-Final (mini) project for 10-315
+## Final (mini) project for 10-315
+## Team: Lawrence C, Gustavo S, Alan L
 
 Its an AI for geo-guesser... give it an input image location and it'll estimate where it thinks it is.
 
@@ -15,4 +16,5 @@ jupytext          # if want to create a .ipynb for jupyter notebook
 
 Using the [google-streetview developer API](https://pypi.org/project/google-streetview/) for downloading the dataset
 
-Lawrence C, Gustavo S, Alan L
+## Getting started
+Begin by downloading the dataset of images/coordinates from either `gsv_query` or 
