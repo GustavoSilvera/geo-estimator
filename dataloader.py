@@ -1,12 +1,14 @@
 import torch
 import numpy as np
 from typing import Tuple
-from torchvision import transforms
 from PIL import Image
 import os
+
+# get this for MacOS: https://discuss.pytorch.org/t/failed-to-load-image-python-extension-could-not-find-module/140278/8
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)  # no more nasty torch warnings
+from torchvision import transforms
 
 
 class ImageDataset(torch.utils.data.Dataset):
