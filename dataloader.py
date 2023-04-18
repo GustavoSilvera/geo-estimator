@@ -1,3 +1,5 @@
+## ImageDataset to (lazily) load images and associated metadata
+
 import torch
 import numpy as np
 from typing import Tuple
@@ -42,6 +44,8 @@ class ImageDataset(torch.utils.data.Dataset):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         assert 0 <= idx < self.dataset_size
         assert 0 <= view <= 5
+        # TODO: keep a running batch of images loaded in memory (limited to some number) and
+        # use this as a running queue for fast img access time
         img_path: str = os.path.join(self.data_dir, "images", f"{idx:06d}_{view}.jpg")
         if not os.path.exists(img_path):
             return None, None, None
