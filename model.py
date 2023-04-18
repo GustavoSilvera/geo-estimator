@@ -1,10 +1,8 @@
+## Begin model
+
 import torch
 
-try:
-    from utils import device
-except:
-    pass  # already in global context
-
+from utils import device
 
 class GeoGuesser(torch.nn.Module):
     def __init__(self):

@@ -1,5 +1,4 @@
-# Function to download Google Street View images and metadata for use as a dataset
-# of images and locations.
+### Function to download Google Street View images and metadata for use as a dataset of images and locations.
 
 
 def download_gsv():

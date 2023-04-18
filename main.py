@@ -1,8 +1,4 @@
-try:
-    from model import GeoGuesser
-except:
-    pass
-
+from model import GeoGuesser
 
 m = GeoGuesser()
 

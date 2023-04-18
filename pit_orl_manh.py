@@ -1,3 +1,6 @@
+### Function to download individual files from the PitOrlManh dataset from a particular view
+
+
 def download_pom(view: int = 4):
     # view is either 1 (rear), 2 (right), 3 (left), 4(front), or 5(up)
     assert 1 <= view <= 5
@@ -17,12 +20,19 @@ def download_pom(view: int = 4):
         os.system(f"wget {url}")
         print(f"Finished downloading image {i}")
 
-    coords: str = "http://www.cs.ucf.edu/~aroshan/index_files/Dataset_PitOrlManh/#:~:text=Cartesian_Location_Coordinates.mat"
+    import scipy
+
+    coord_file: str = "Cartesian_Location_Coordinates.mat"
+    coords: str = f"http://www.cs.ucf.edu/~aroshan/index_files/Dataset_PitOrlManh/#:~:text={coord_file}"
     os.system(f"wget {coords}")  # download metadata for coordinates
+    mat = scipy.io.loadmat(coord_file)
 
     os.chdir("..")  # back to main dir
 
     print(f'Downloads successful in "{data_dir}"')
+
+
+### Function to download the entire PitOrlManh dataset (~50Gb)
 
 
 def download_pom_raw():
