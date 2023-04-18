@@ -2,7 +2,7 @@ import jupytext
 
 files = [
     "utils",  # utilities (run first)
-    "google_streetview_query",
+    "gsv_query",
     "pit_orl_manh",
     "model",
     "main",
@@ -40,4 +40,6 @@ for c in nb.cells:
         non_empty_cells.append(c)
 nb.cells = non_empty_cells
 
-jupytext.write(nb, "geo-estimator.ipynb", fmt=".ipynb")
+out:str = "geo-estimator.ipynb"
+jupytext.write(nb, out, fmt=".ipynb")
+print(f"Output .ipynb file to {out}")
