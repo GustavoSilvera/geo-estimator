@@ -15,7 +15,7 @@ def download_pom(data_dir: str, view: int = 4, num_images: int = -1):
     os.makedirs(img_dir, exist_ok=True)  # for downloading the images
     os.chdir(img_dir)
 
-    max_dataset: int = 0  # total dataset is approx 10343
+    max_dataset: int = 10000  # total dataset is approx 10343
     num_download: int = num_images if num_images > 0 else max_dataset
     num_download = min(num_download, max_dataset)
 

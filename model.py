@@ -77,7 +77,7 @@ class GeoGuesser(torch.nn.Module):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         # return a randomized batch of data from the corresponding dataset
         data = self.train_idxs if type == "train" else self.test_idxs
-        start_idx = torch.randint(low=0, high=max(data), size=(batch_size, 1))
+        start_idx = torch.randint(low=1, high=max(data) - 1, size=(batch_size, 1))
         data = [self.dataset[int(i)] for i in start_idx]
         images = torch.stack([image for image, _, _ in data])
         xyz = torch.stack([xyz for _, xyz, _ in data])

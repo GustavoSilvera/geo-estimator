@@ -10,6 +10,8 @@ from dataloader import ImageDataset
 from utils import device
 
 
+BIG_DATASET: bool = False  # flip this to use all available images from the dataset
+
 # load data
 dataset_dir: str = "dataset"
 if not (
@@ -18,7 +20,7 @@ if not (
     and os.path.exists(os.path.join(dataset_dir, "gps_compass.txt"))
 ):
     # whether or not we need to download the dataset
-    download_pom(dataset_dir, num_images=-1)  # begin downloading dataset
+    download_pom(dataset_dir, num_images=-1 if BIG_DATASET else 100)
 
 dataset = ImageDataset(dataset_dir, res=0.5)  # tune im_scale to change resolution scale
 # examples
