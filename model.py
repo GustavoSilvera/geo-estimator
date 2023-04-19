@@ -1,21 +1,21 @@
 ## Begin model
 
 import torch
-import numpy as np
+import os
 from typing import Tuple, Dict, Optional
 
-from utils import device
-
 # main parameters to tune
-batch_size: int = 8  # number of training instances happening at once (in parallel)
+batch_size: int = 64  # number of training instances happening at once (in parallel)
 seed: int = 1  # to fix the randomness
 torch.manual_seed(seed)
-epochs: int = 1
+epochs: int = 2000
 eval_iter: int = 50
-lr: float = 0.001
+lr: float = 0.01
 n_layer: int = 8
 dropout: float = 0.2  # percent of indermediate calculations that are disabled
 dim: int = 2**4
+ckpt_dir: str = "ckpt"
+os.makedirs(ckpt_dir, exist_ok=True)
 
 
 class GeoGuesser(torch.nn.Module):
@@ -87,8 +87,44 @@ class GeoGuesser(torch.nn.Module):
         assert gps.shape == (batch_size, 3)
         return images, xyz, gps
 
-    def begin_training(self):
+    def get_ckpt(self, id: int = -1):
+        if id is None or id < 0:
+            id = max([l for l in os.listdir(ckpt_dir)])
+        return os.path.join(ckpt_dir, f"ckpt_{id}.pt")
+
+    def load(self, ckpt: int = -1) -> None:
+        ckpt_path: str = self.get_ckpt(ckpt)
+        with open(ckpt_path, "rb") as f:
+            self.load_state_dict(torch.load(f))
+            print(f'Loaded state dict from "{ckpt_path}" successfully!')
+            print()
+
+    def begin_training(self) -> None:
         self.train()
+        optimizer = torch.optim.AdamW(self.parameters(), lr=lr)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
+
+        train_loss = float("nan")
+        val_loss = float("nan")
+        for epoch in range(epochs):
+            img, xyz, gps = self.sample_batch()
+            xyzgps = torch.hstack((xyz, gps))
+            _, loss = self.forward(img, xyzgps)
+            optimizer.zero_grad(set_to_none=True)
+            loss.backward()
+            optimizer.step()
+            est_loss: bool = epoch % eval_iter == eval_iter - 1
+            if est_loss:
+                train_loss, val_loss = self.estimate_loss(num_iters=eval_iter)
+                torch.save(self.state_dict(), self.get_ckpt(epoch))
+                scheduler.step(loss)
+            print(
+                f"Training {epoch:>4}/{epochs} \t ({100 * epoch / epochs:.1f}%) \t Train loss: {train_loss:.2f} \t Val loss: {val_loss:.2f}",
+                end="\r",
+                flush=True,
+            )
+            if est_loss:
+                print()
 
     # create a loss estimator for averaging training and val loss
     def estimate_loss(self, num_iters: int = 20) -> Tuple[float, float]:

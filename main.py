@@ -48,3 +48,5 @@ print(pred)
 loss_train, loss_test = m.estimate_loss()
 print(f"loss train: {loss_train}")
 print(f"loss test: {loss_test}")
+
+m.begin_training()
