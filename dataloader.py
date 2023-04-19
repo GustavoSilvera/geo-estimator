@@ -19,14 +19,16 @@ class ImageDataset(torch.utils.data.Dataset):
     def __init__(self, data_dir: str = None, res: float = 1):
         super().__init__()
         self.data_dir = data_dir
-        self.dataset_size = len(os.listdir(os.path.join(data_dir, "images")))
+        self.image_dir = "images"
+        # self.image_dir = os.path.join("images", "lowres")  # use low-res
+        self.dataset_size = len(os.listdir(os.path.join(data_dir, self.image_dir)))
         self.xyz_cartesian = np.loadtxt(os.path.join(data_dir, "xyz_cartesian.txt"))
         self.gps_compass = np.loadtxt(os.path.join(data_dir, "gps_compass.txt"))
         assert len(self.xyz_cartesian) == len(self.gps_compass) >= self.dataset_size
         # scale factor for images (resolution scale)
         assert 0 < res <= 1
         # get the resolution for the images
-        example_im: str = os.path.join(data_dir, "images", "000001_4.jpg")
+        example_im: str = os.path.join(data_dir, self.image_dir, "000001_4.jpg")
         assert os.path.exists(example_im)
         self.im_res = (transforms.ToTensor()(Image.open(example_im))).shape
         # initialize transformations
@@ -46,7 +48,7 @@ class ImageDataset(torch.utils.data.Dataset):
         assert 0 <= view <= 5
         # TODO: keep a running batch of images loaded in memory (limited to some number) and
         # use this as a running queue for fast img access time
-        img_path: str = os.path.join(self.data_dir, "images", f"{idx:06d}_{view}.jpg")
+        img_path = os.path.join(self.data_dir, self.image_dir, f"{idx:06d}_{view}.jpg")
         if not os.path.exists(img_path):
             return None, None, None
         im: torch.Tensor = self.to_tensor(self.resize_im(Image.open(img_path)))
