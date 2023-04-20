@@ -5,7 +5,7 @@ import os
 from typing import Tuple, Dict, Optional
 
 # main parameters to tune
-batch_size: int = 64  # number of training instances happening at once (in parallel)
+batch_size: int = 8  # number of training instances happening at once (in parallel)
 seed: int = 1  # to fix the randomness
 torch.manual_seed(seed)
 epochs: int = 2000
@@ -13,7 +13,6 @@ eval_iter: int = 50
 lr: float = 0.01
 n_layer: int = 8
 dropout: float = 0.2  # percent of indermediate calculations that are disabled
-dim: int = 2**4
 ckpt_dir: str = "ckpt"
 os.makedirs(ckpt_dir, exist_ok=True)
 
@@ -38,17 +37,37 @@ class GeoGuesser(torch.nn.Module):
         # create the network
         self.out_size = 6  # x, y, z, lat, lon, compass
         self.network = torch.nn.Sequential(
-            *[
-                torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, bias=False),
-                torch.nn.ReLU(inplace=True),
-                torch.nn.AdaptiveAvgPool2d((1, 1)),  # use maxpool?
-                torch.nn.Flatten(),
-                # torch.nn.LayerNorm(),
-                torch.nn.Linear(64, self.out_size),  # final FC layer
-            ]
+            # first set of CONV->RELU->POOL
+            torch.nn.Conv2d(
+                in_channels=self.im_res[0],  # colour channels
+                out_channels=50,
+                kernel_size=5,
+                stride=1,
+                bias=False,
+                padding=1,
+            ),
+            torch.nn.ReLU(inplace=True),
+            torch.nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
+            # next set of CONV->RELU->POOL
+            torch.nn.Conv2d(
+                in_channels=50,
+                out_channels=20,  # number of filters to learn
+                kernel_size=5,  # (3x3) filter size
+                stride=1,
+                bias=False,
+                padding=1,
+            ),
+            torch.nn.ReLU(inplace=True),
+            torch.nn.MaxPool2d(kernel_size=(4, 4), stride=(4, 4)),
+            # finall FC7 (layer)
+            torch.nn.Flatten(),
+            torch.nn.Linear(700, 50),
+            torch.nn.ReLU(inplace=True),
+            torch.nn.Linear(50, self.out_size),  # final FC layer
         )
 
         self.l2_loss = torch.nn.MSELoss()
+        self.l2_loss = torch.nn.L1Loss()
 
     def forward(
         self, x: torch.Tensor, y: Optional[torch.Tensor] = None
@@ -69,7 +88,7 @@ class GeoGuesser(torch.nn.Module):
         gps_target = y[:, 3:]
         distance_xyz = self.l2_loss(xyz_pred, xyz_target)
         # TODO: find a better metric for distance of GPS
-        distance_gps = self.l2_loss(gps_pred, gps_target)
+        distance_gps = 0  # self.l2_loss(gps_pred, gps_target)
         return distance_xyz + distance_gps
 
     def sample_batch(

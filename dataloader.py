@@ -19,8 +19,8 @@ class ImageDataset(torch.utils.data.Dataset):
     def __init__(self, data_dir: str = None, res: float = 1):
         super().__init__()
         self.data_dir = data_dir
-        self.image_dir = "images"
-        # self.image_dir = os.path.join("images", "lowres")  # use low-res
+        # self.image_dir = "images"
+        self.image_dir = os.path.join("images", "lowres")  # use low-res
         self.dataset_size = len(os.listdir(os.path.join(data_dir, self.image_dir)))
         self.xyz_cartesian = np.loadtxt(os.path.join(data_dir, "xyz_cartesian.txt"))
         self.gps_compass = np.loadtxt(os.path.join(data_dir, "gps_compass.txt"))
