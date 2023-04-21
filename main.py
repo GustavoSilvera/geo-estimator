@@ -40,9 +40,6 @@ m = GeoGuesser(dataset, image.shape, train, test)
 m = m.to(device)
 print(m)
 
-ex_batch = m.sample_batch()
-# print(ex_batch)
-
 pred, _ = m.forward(image)
 print(pred)
 

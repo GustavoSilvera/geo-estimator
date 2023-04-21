@@ -5,7 +5,7 @@ import os
 from typing import Tuple, Dict, Optional, List
 
 # main parameters to tune
-batch_size: int = 64  # number of training instances happening at once (in parallel)
+batch_size: int = 32  # number of training instances happening at once (in parallel)
 seed: int = 1  # to fix the randomness
 torch.manual_seed(seed)
 epochs: int = 500
@@ -29,16 +29,17 @@ class GeoGuesser(torch.nn.Module):
     ):
         super().__init__()
         self.dataset = dataset
-        self.train_idxs = train_idxs
-        self.test_idxs = test_idxs
+        # don't track these buffers as "model parameters"
+        self.register_buffer("train_idxs", train_idxs, persistent=False)
+        self.register_buffer("test_idxs", test_idxs, persistent=False)
 
         self.im_res = im_res
         c, h, w = self.im_res
 
         # create the network
         self.out_size = 3  # x, y, z, lat, lon, compass
-        conv_dims = [c, 50, 50, 50, 50, 50, 30]
-        conv_kernels = [7, 5, 5, 5, 5, 5]
+        conv_dims = [c, 8]
+        conv_kernels = [3]
         assert len(conv_dims) == 1 + len(conv_kernels)  # includes input channels
         conv_dims2 = [conv_dims[-1], 30, 30]
         conv_kernels2 = [3, 3]
@@ -73,12 +74,12 @@ class GeoGuesser(torch.nn.Module):
                 ConvReluBlock(i, conv_dims2, conv_kernels2)
                 for i in range(len(conv_kernels2))
             ],
-            torch.nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
+            torch.nn.MaxPool2d(kernel_size=(4, 4), stride=(4, 4)),
             torch.nn.ReLU(inplace=True),
             # finall FC7 (layer)
             torch.nn.Flatten(),  # convert to latent vector space for FC layer
             # torch.nn.Linear(conv_dims[-1] * w * h, fc_dim),
-            torch.nn.Linear(94080, fc_dim),
+            torch.nn.Linear(23520, fc_dim),
             torch.nn.Dropout(dropout),
             torch.nn.ReLU(inplace=True),
             torch.nn.Linear(fc_dim, self.out_size),  # final FC layer
@@ -86,6 +87,8 @@ class GeoGuesser(torch.nn.Module):
 
         self.l2_loss = torch.nn.MSELoss()
         self.l1_loss = torch.nn.L1Loss()
+
+        print(f"State dict: {list(self.state_dict().keys())}")
 
     def forward(
         self, x: torch.Tensor, y: Optional[torch.Tensor] = None
@@ -117,7 +120,7 @@ class GeoGuesser(torch.nn.Module):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         # return a randomized batch of data from the corresponding dataset
         data = self.train_idxs if type == "train" else self.test_idxs
-        start_idx = torch.randint(low=1, high=max(data) - 1, size=(batch_size, 1))
+        start_idx = torch.randint(low=1, high=data.max() - 1, size=(batch_size, 1))
         data = [self.dataset[int(i)] for i in start_idx]
         images = torch.stack([image for image, _, _ in data])
         # xyz = torch.stack([xyz for _, xyz, _ in data])
