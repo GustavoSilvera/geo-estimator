@@ -2,15 +2,15 @@
 
 import torch
 import os
-from typing import Tuple, Dict, Optional
+from typing import Tuple, Dict, Optional, List
 
 # main parameters to tune
-batch_size: int = 8  # number of training instances happening at once (in parallel)
+batch_size: int = 64  # number of training instances happening at once (in parallel)
 seed: int = 1  # to fix the randomness
 torch.manual_seed(seed)
-epochs: int = 2000
+epochs: int = 300
 eval_iter: int = 50
-lr: float = 0.01
+lr: float = 0.005
 n_layer: int = 8
 dropout: float = 0.2  # percent of indermediate calculations that are disabled
 ckpt_dir: str = "ckpt"
@@ -33,41 +33,46 @@ class GeoGuesser(torch.nn.Module):
         self.test_idxs = test_idxs
 
         self.im_res = im_res
+        c, w, h = self.im_res
 
         # create the network
         self.out_size = 6  # x, y, z, lat, lon, compass
+        conv_dims = [c, 50, 50, 50, 50, 50, 30]
+        conv_kernels = [3, 3, 3, 3, 3, 5]
+        assert len(conv_dims) == 1 + len(conv_kernels)  # includes input channels
+
+        class ConvReluBlock(torch.nn.Module):
+            def __init__(self, i):
+                super().__init__()
+                self.network = torch.nn.Sequential(
+                    torch.nn.Conv2d(
+                        in_channels=conv_dims[i],
+                        out_channels=conv_dims[i + 1],
+                        kernel_size=conv_kernels[i],
+                        stride=1,
+                        bias=False,
+                        padding=conv_kernels[i] // 2,
+                    ),
+                    torch.nn.ReLU(inplace=True),
+                    # torch.nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
+                )
+
+            def forward(self, x):
+                # print(x.shape)
+                return self.network.forward(x)
+
         self.network = torch.nn.Sequential(
-            # first set of CONV->RELU->POOL
-            torch.nn.Conv2d(
-                in_channels=self.im_res[0],  # colour channels
-                out_channels=50,
-                kernel_size=5,
-                stride=1,
-                bias=False,
-                padding=1,
-            ),
-            torch.nn.ReLU(inplace=True),
-            torch.nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
-            # next set of CONV->RELU->POOL
-            torch.nn.Conv2d(
-                in_channels=50,
-                out_channels=20,  # number of filters to learn
-                kernel_size=5,  # (3x3) filter size
-                stride=1,
-                bias=False,
-                padding=1,
-            ),
-            torch.nn.ReLU(inplace=True),
-            torch.nn.MaxPool2d(kernel_size=(4, 4), stride=(4, 4)),
+            *[ConvReluBlock(i) for i in range(len(conv_kernels))],
             # finall FC7 (layer)
-            torch.nn.Flatten(),
-            torch.nn.Linear(700, 50),
+            torch.nn.Flatten(),  # convert to latent vector space for FC layer
+            torch.nn.Linear(conv_dims[-1] * w * h, 50),
+            torch.nn.Dropout(dropout),
             torch.nn.ReLU(inplace=True),
             torch.nn.Linear(50, self.out_size),  # final FC layer
         )
 
         self.l2_loss = torch.nn.MSELoss()
-        self.l2_loss = torch.nn.L1Loss()
+        self.l1_loss = torch.nn.L1Loss()
 
     def forward(
         self, x: torch.Tensor, y: Optional[torch.Tensor] = None
@@ -86,9 +91,10 @@ class GeoGuesser(torch.nn.Module):
         gps_pred = x[:, 3:]
         xyz_target = y[:, :3]
         gps_target = y[:, 3:]
-        distance_xyz = self.l2_loss(xyz_pred, xyz_target)
+        # TODO: are we using xyz at all?
+        distance_xyz = 0  # self.l2_loss(xyz_pred, xyz_target)
         # TODO: find a better metric for distance of GPS
-        distance_gps = 0  # self.l2_loss(gps_pred, gps_target)
+        distance_gps = self.l1_loss(gps_pred, gps_target)
         return distance_xyz + distance_gps
 
     def sample_batch(
@@ -138,7 +144,7 @@ class GeoGuesser(torch.nn.Module):
                 torch.save(self.state_dict(), self.get_ckpt(epoch))
                 scheduler.step(loss)
             print(
-                f"Training {epoch:>4}/{epochs} \t ({100 * epoch / epochs:.1f}%) \t Train loss: {train_loss:.2f} \t Val loss: {val_loss:.2f}",
+                f"Epoch {epoch:>4}/{epochs} \t ({100 * epoch / epochs:.1f}%) \t Train loss: {train_loss:.2f} \t Val loss: {val_loss:.2f}",
                 end="\r",
                 flush=True,
             )

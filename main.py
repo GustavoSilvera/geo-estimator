@@ -22,7 +22,8 @@ if not (
     # whether or not we need to download the dataset
     download_pom(dataset_dir, num_images=-1 if BIG_DATASET else 100)
 
-dataset = ImageDataset(dataset_dir, res=0.5)  # tune im_scale to change resolution scale
+dataset = ImageDataset(dataset_dir, res=1)  # tune im_scale to change resolution scale
+dataset.preload() # load everything in memory to be super fast!
 # examples
 image, xyz, gps = dataset[0]  # happens to be all None!
 image, xyz, gps = dataset[56]  # non-None example
@@ -46,7 +47,7 @@ pred, _ = m.forward(image)
 print(pred)
 
 loss_train, loss_test = m.estimate_loss()
-print(f"loss train: {loss_train}")
-print(f"loss test: {loss_test}")
+print(f"Initial (train) loss: {loss_train:.2f}")
+print(f"Initial (test) loss: {loss_test:.2f}")
 
 m.begin_training()

@@ -2,9 +2,9 @@
 
 import torch
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Dict
 from PIL import Image
-import os
+import os, sys
 
 # get this for MacOS: https://discuss.pytorch.org/t/failed-to-load-image-python-extension-could-not-find-module/140278/8
 import warnings
@@ -36,6 +36,30 @@ class ImageDataset(torch.utils.data.Dataset):
         self.resize_im = transforms.Resize(
             (int(self.im_res[1] * res), int(self.im_res[2] * res))
         )
+        self.cache = {}
+
+    def compute_size_mb(self, data: Dict[int, Tuple[torch.Tensor]]) -> float:
+        if len(data) == 0:
+            return 0
+        # assume all the data elements are the same size (in terms of memory)
+        c, w, h = self.im_res
+        size = c * w * h * 4  # 4 bytes (float) for a c-channel image of size w * h
+        return len(data) * size / 1e6
+
+    def preload(self) -> None:
+        num_load: int = len(self)
+        print(f"Preloading {num_load} data entries! (this might take a while)")
+        for i in range(num_load):
+            # pre-load all the data in memory so it can be accessed FAST
+            self.cache[i] = self[i]
+            mb = self.compute_size_mb(self.cache)
+            print(
+                f"Preload complete: {100 * i / num_load:.1f}% ({mb:.2f}mb)",
+                end="\r",
+                flush=True,
+            )
+        print()
+        print(f"Done, consumed {mb:.2f}mb")
 
     def __len__(self) -> int:
         return self.dataset_size
@@ -46,6 +70,8 @@ class ImageDataset(torch.utils.data.Dataset):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         assert 0 <= idx < self.dataset_size
         assert 0 <= view <= 5
+        if idx in self.cache:
+            return self.cache[idx]
         # TODO: keep a running batch of images loaded in memory (limited to some number) and
         # use this as a running queue for fast img access time
         img_path = os.path.join(self.data_dir, self.image_dir, f"{idx:06d}_{view}.jpg")
