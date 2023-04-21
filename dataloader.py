@@ -54,12 +54,12 @@ class ImageDataset(torch.utils.data.Dataset):
             self.cache[i] = self[i]
             mb = self.compute_size_mb(self.cache)
             print(
-                f"Preload complete: {100 * i / num_load:.1f}% ({mb:.2f}mb)",
+                f"Preload complete: {100 * i / num_load:.1f}% ({mb:.2f}Mb)",
                 end="\r",
                 flush=True,
             )
         print()
-        print(f"Done, consumed {mb:.2f}mb")
+        print(f"Done, consumed {mb:.2f}Mb")
 
     def __len__(self) -> int:
         return self.dataset_size

@@ -139,10 +139,6 @@ class GeoGuesser(torch.nn.Module):
             loss.backward()
             optimizer.step()
             est_loss: bool = epoch % eval_iter == eval_iter - 1
-            if est_loss:
-                train_loss, val_loss = self.estimate_loss(num_iters=eval_iter)
-                torch.save(self.state_dict(), self.get_ckpt(epoch))
-                scheduler.step(loss)
             print(
                 f"Epoch {epoch:>4}/{epochs} \t ({100 * epoch / epochs:.1f}%) \t Train loss: {train_loss:.2f} \t Val loss: {val_loss:.2f}",
                 end="\r",
@@ -150,6 +146,9 @@ class GeoGuesser(torch.nn.Module):
             )
             if est_loss:
                 print()
+                train_loss, val_loss = self.estimate_loss(num_iters=eval_iter)
+                torch.save(self.state_dict(), self.get_ckpt(epoch))
+                scheduler.step(loss)
 
     # create a loss estimator for averaging training and val loss
     def estimate_loss(self, num_iters: int = 20) -> Tuple[float, float]:
@@ -170,4 +169,7 @@ class GeoGuesser(torch.nn.Module):
                     )
                 losses[split] = cumulative_loss / num_iters
             self.train()  # back to training phase
+        # https://stackoverflow.com/questions/5419389/how-to-overwrite-the-previous-print-to-stdout
+        for x in range(75):  # line clearing
+            print("*" * (75 - x), x, end="\x1b[1K\r")
         return losses["train"], losses["valid"]
