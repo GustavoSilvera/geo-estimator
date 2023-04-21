@@ -43,4 +43,5 @@ print(m)
 pred, _ = m.forward(image)
 print(pred)
 
+m.load()  # try to load from the latest ckpt
 m.begin_training()

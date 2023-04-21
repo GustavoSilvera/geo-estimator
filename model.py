@@ -8,7 +8,7 @@ from typing import Tuple, Dict, Optional, List
 batch_size: int = 32  # number of training instances happening at once (in parallel)
 seed: int = 1  # to fix the randomness
 torch.manual_seed(seed)
-epochs: int = 500
+epochs: int = 1000
 eval_iter: int = 50
 lr: float = 0.001
 fc_dim: int = 5000  # dimensionality of the final fully connected layer
@@ -130,17 +130,23 @@ class GeoGuesser(torch.nn.Module):
         assert gps.shape == (batch_size, 3)
         return images, gps
 
-    def get_ckpt(self, id: int = -1):
+    def get_ckpt(self, id: int = -1) -> str:
         if id is None or id < 0:
-            id = max([l for l in os.listdir(ckpt_dir)])
+            try:
+                id = max(os.listdir(ckpt_dir))
+            except Exception as e:
+                id = 0
         return os.path.join(ckpt_dir, f"ckpt_{id}.pt")
 
-    def load(self, ckpt: int = -1) -> None:
+    def load(self, ckpt: Optional[int] = -1) -> None:
         ckpt_path: str = self.get_ckpt(ckpt)
-        with open(ckpt_path, "rb") as f:
-            self.load_state_dict(torch.load(f))
-            print(f'Loaded state dict from "{ckpt_path}" successfully!')
-            print()
+        if os.path.exists(ckpt_path):
+            with open(ckpt_path, "rb") as f:
+                self.load_state_dict(torch.load(f))
+                print(f'Loaded state dict from "{ckpt_path}" successfully!')
+                print()
+        else:
+            print(f'No ckpt found @ "{ckpt_path}"')
 
     def begin_training(self) -> None:
         self.train()
