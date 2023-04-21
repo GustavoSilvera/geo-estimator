@@ -13,6 +13,8 @@ eval_iter: int = 50
 lr: float = 0.001
 fc_dim: int = 5000  # dimensionality of the final fully connected layer
 dropout: float = 0.2  # percent of indermediate calculations that are disabled
+regularization: float = 0.01  # regularization strength
+momentum: float = 0.9
 ckpt_dir: str = "ckpt"
 os.makedirs(ckpt_dir, exist_ok=True)
 
@@ -41,8 +43,8 @@ class GeoGuesser(torch.nn.Module):
         conv_dims = [c, 8]
         conv_kernels = [3]
         assert len(conv_dims) == 1 + len(conv_kernels)  # includes input channels
-        conv_dims2 = [conv_dims[-1], 30, 30]
-        conv_kernels2 = [3, 3]
+        conv_dims2 = [conv_dims[-1], 30]
+        conv_kernels2 = [5]
 
         class ConvReluBlock(torch.nn.Module):
             def __init__(self, i: int, dims: List[int], kernels: List[int]):
@@ -150,7 +152,11 @@ class GeoGuesser(torch.nn.Module):
 
     def begin_training(self) -> None:
         self.train()
-        optimizer = torch.optim.AdamW(self.parameters(), lr=lr)
+        optimizer = torch.optim.AdamW(
+            self.parameters(),
+            lr=lr,
+            weight_decay=regularization,
+        )
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
         train_loss, val_loss = self.estimate_loss()  # initial losses
         for epoch in range(epochs):
@@ -165,7 +171,7 @@ class GeoGuesser(torch.nn.Module):
                 end="\r",
                 flush=True,
             )
-            if epoch % eval_iter == 0:
+            if epoch % eval_iter == 0 and epoch > 0:
                 print()
                 train_loss, val_loss = self.estimate_loss(num_iters=eval_iter)
                 torch.save(self.state_dict(), self.get_ckpt(epoch))
@@ -174,6 +180,7 @@ class GeoGuesser(torch.nn.Module):
         print(
             f"Epoch {epochs}/{epochs} \t ({100:.1f}%) \t Train loss: {train_loss:.2f} \t Val loss: {val_loss:.2f}"
         )
+        torch.save(self.state_dict(), self.get_ckpt(epoch))
 
     # create a loss estimator for averaging training and val loss
     def estimate_loss(self, num_iters: int = 20) -> Tuple[float, float]:
