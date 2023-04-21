@@ -46,8 +46,4 @@ ex_batch = m.sample_batch()
 pred, _ = m.forward(image)
 print(pred)
 
-loss_train, loss_test = m.estimate_loss()
-print(f"Initial (train) loss: {loss_train:.2f}")
-print(f"Initial (test) loss: {loss_test:.2f}")
-
 m.begin_training()

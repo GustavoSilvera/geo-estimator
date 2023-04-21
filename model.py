@@ -11,7 +11,7 @@ torch.manual_seed(seed)
 epochs: int = 300
 eval_iter: int = 50
 lr: float = 0.005
-n_layer: int = 8
+fc_dim: int = 50  # dimensionality of the final fully connected layer
 dropout: float = 0.2  # percent of indermediate calculations that are disabled
 ckpt_dir: str = "ckpt"
 os.makedirs(ckpt_dir, exist_ok=True)
@@ -65,10 +65,10 @@ class GeoGuesser(torch.nn.Module):
             *[ConvReluBlock(i) for i in range(len(conv_kernels))],
             # finall FC7 (layer)
             torch.nn.Flatten(),  # convert to latent vector space for FC layer
-            torch.nn.Linear(conv_dims[-1] * w * h, 50),
+            torch.nn.Linear(conv_dims[-1] * w * h, fc_dim),
             torch.nn.Dropout(dropout),
             torch.nn.ReLU(inplace=True),
-            torch.nn.Linear(50, self.out_size),  # final FC layer
+            torch.nn.Linear(fc_dim, self.out_size),  # final FC layer
         )
 
         self.l2_loss = torch.nn.MSELoss()
@@ -128,9 +128,7 @@ class GeoGuesser(torch.nn.Module):
         self.train()
         optimizer = torch.optim.AdamW(self.parameters(), lr=lr)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
-
-        train_loss = float("nan")
-        val_loss = float("nan")
+        train_loss, val_loss = self.estimate_loss()  # initial losses
         for epoch in range(epochs):
             img, xyz, gps = self.sample_batch()
             xyzgps = torch.hstack((xyz, gps))
@@ -138,13 +136,12 @@ class GeoGuesser(torch.nn.Module):
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             optimizer.step()
-            est_loss: bool = epoch % eval_iter == eval_iter - 1
             print(
                 f"Epoch {epoch:>4}/{epochs} \t ({100 * epoch / epochs:.1f}%) \t Train loss: {train_loss:.2f} \t Val loss: {val_loss:.2f}",
                 end="\r",
                 flush=True,
             )
-            if est_loss:
+            if epoch % eval_iter == 0:
                 print()
                 train_loss, val_loss = self.estimate_loss(num_iters=eval_iter)
                 torch.save(self.state_dict(), self.get_ckpt(epoch))
