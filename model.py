@@ -135,7 +135,9 @@ class GeoGuesser(torch.nn.Module):
     def get_ckpt(self, id: int = -1) -> str:
         if id is None or id < 0:
             try:
-                id = max(os.listdir(ckpt_dir))
+                # only take the int (epoch) component
+                files = os.listdir(ckpt_dir)
+                id = max([int(f.strip("ckpt_").strip(".pt")) for f in files])
             except Exception as e:
                 id = 0
         return os.path.join(ckpt_dir, f"ckpt_{id}.pt")
@@ -180,7 +182,7 @@ class GeoGuesser(torch.nn.Module):
         print(
             f"Epoch {epochs}/{epochs} \t ({100:.1f}%) \t Train loss: {train_loss:.2f} \t Val loss: {val_loss:.2f}"
         )
-        torch.save(self.state_dict(), self.get_ckpt(epoch))
+        torch.save(self.state_dict(), self.get_ckpt(epochs))
 
     # create a loss estimator for averaging training and val loss
     def estimate_loss(self, num_iters: int = 20) -> Tuple[float, float]:
