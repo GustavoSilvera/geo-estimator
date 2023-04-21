@@ -23,7 +23,7 @@ if not (
     download_pom(dataset_dir, num_images=-1 if BIG_DATASET else 100)
 
 dataset = ImageDataset(dataset_dir, res=1)  # tune im_scale to change resolution scale
-dataset.preload() # load everything in memory to be super fast!
+dataset.preload()  # load everything in memory to be super fast!
 # examples
 image, xyz, gps = dataset[0]  # happens to be all None!
 image, xyz, gps = dataset[56]  # non-None example

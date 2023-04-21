@@ -19,8 +19,10 @@ class ImageDataset(torch.utils.data.Dataset):
     def __init__(self, data_dir: str = None, res: float = 1):
         super().__init__()
         self.data_dir = data_dir
-        # self.image_dir = "images"
-        self.image_dir = os.path.join("images", "lowres")  # use low-res
+        self.image_dir = "images"
+        self.image_dir = os.path.join(
+            self.image_dir, "lowres"
+        )  # use low-res (TODO: parameterize)
         self.dataset_size = len(os.listdir(os.path.join(data_dir, self.image_dir)))
         self.xyz_cartesian = np.loadtxt(os.path.join(data_dir, "xyz_cartesian.txt"))
         self.gps_compass = np.loadtxt(os.path.join(data_dir, "gps_compass.txt"))
@@ -32,17 +34,26 @@ class ImageDataset(torch.utils.data.Dataset):
         assert os.path.exists(example_im)
         self.im_res = (transforms.ToTensor()(Image.open(example_im))).shape
         # initialize transformations
-        self.to_tensor = transforms.ToTensor()
-        self.resize_im = transforms.Resize(
-            (int(self.im_res[1] * res), int(self.im_res[2] * res))
+        # see https://pytorch.org/hub/pytorch_vision_vgg/
+        self.preprocess = transforms.Compose(
+            [
+                transforms.Resize(256),
+                # transforms.Resize((int(self.im_res[1] * res), int(self.im_res[2] * res))),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize( # for VGG-net
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
         )
+        # for preloading the images
         self.cache = {}
 
     def compute_size_mb(self, data: Dict[int, Tuple[torch.Tensor]]) -> float:
         if len(data) == 0:
             return 0
         # assume all the data elements are the same size (in terms of memory)
-        c, w, h = self.im_res
+        c, h, w = self.im_res
         size = c * w * h * 4  # 4 bytes (float) for a c-channel image of size w * h
         return len(data) * size / 1e6
 
@@ -77,7 +88,7 @@ class ImageDataset(torch.utils.data.Dataset):
         img_path = os.path.join(self.data_dir, self.image_dir, f"{idx:06d}_{view}.jpg")
         if not os.path.exists(img_path):
             return None, None, None
-        im: torch.Tensor = self.to_tensor(self.resize_im(Image.open(img_path)))
+        im: torch.Tensor = self.preprocess(Image.open(img_path))
         # can't compute gradients with uint8 :((
         # im = (255 * im).type(torch.uint8)  # to uint8 to save memory (vs float32)
         # return image (tensor), tuple of cartesian coords (x, y, z), and tuple of GPS & compass (lat, long, compass)
