@@ -99,11 +99,14 @@ class GeoGuesser(torch.nn.Module):
             x = torch.unsqueeze(x, dim=0)  # batch of 1
         B, C, H, W = x.shape  # (batch, channels, height, width)
         logits = self.network.forward(x)
+        if y is not None and len(y.shape) == 1:  # no batch, single sample
+            y = torch.unsqueeze(y, dim=0)  # batch of 1
         loss = self.loss_function(logits, y) if y is not None else None
         return logits, loss
 
     def loss_function(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        assert x.shape == (batch_size, self.out_size)
+        B = x.shape[0] # batch size
+        assert x.shape == (B, self.out_size)
         assert y.shape == x.shape
         # xyz_pred = x[:, :3]
         # gps_pred = x[:, 3:]
