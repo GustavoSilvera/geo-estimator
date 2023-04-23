@@ -5,6 +5,7 @@ import numpy as np
 from typing import Tuple, Dict
 from PIL import Image
 import os, sys
+import glob
 
 # get this for MacOS: https://discuss.pytorch.org/t/failed-to-load-image-python-extension-could-not-find-module/140278/8
 import warnings
@@ -16,36 +17,33 @@ from utils import device
 
 
 class ImageDataset(torch.utils.data.Dataset):
-    def __init__(self, data_dir: str = None, res: float = 1):
+    def __init__(self, data_dir: str = None):
         super().__init__()
         self.data_dir = data_dir
         self.image_dir = "images"
-        self.image_dir = os.path.join(
-            self.image_dir, "lowres"
-        )  # use low-res (TODO: parameterize)
-        self.dataset_size = len(os.listdir(os.path.join(data_dir, self.image_dir)))
+        # self.image_dir = os.path.join(self.image_dir, "lowres")  # use low-res (TODO: parameterize)
+        self.dataset_size = len( #only care about images!
+            glob.glob(os.path.join(data_dir, self.image_dir, "*.jpg"))
+        )
         self.xyz_cartesian = np.loadtxt(os.path.join(data_dir, "xyz_cartesian.txt"))
         self.gps_compass = np.loadtxt(os.path.join(data_dir, "gps_compass.txt"))
         assert len(self.xyz_cartesian) == len(self.gps_compass) >= self.dataset_size
-        # scale factor for images (resolution scale)
-        assert 0 < res <= 1
         # get the resolution for the images
         example_im: str = os.path.join(data_dir, self.image_dir, "000001_4.jpg")
         assert os.path.exists(example_im)
-        self.im_res = (transforms.ToTensor()(Image.open(example_im))).shape
         # initialize transformations
         # see https://pytorch.org/hub/pytorch_vision_vgg/
         self.preprocess = transforms.Compose(
             [
                 transforms.Resize(256),
-                # transforms.Resize((int(self.im_res[1] * res), int(self.im_res[2] * res))),
                 transforms.CenterCrop(224),
                 transforms.ToTensor(),
-                transforms.Normalize( # for VGG-net
+                transforms.Normalize(  # for VGG-net
                     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
                 ),
             ]
         )
+        self.im_res = (self.preprocess(Image.open(example_im))).shape
         # for preloading the images
         self.cache = {}
 

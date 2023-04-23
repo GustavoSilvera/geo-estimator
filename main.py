@@ -21,7 +21,6 @@ parser.add_argument("--big_data", action="store_true", default=BIS_DATASET)
 parser.add_argument("--train", action="store_true", default=TRAIN_MODEL)
 parser.add_argument("--preload", action="store_true", default=PRELOAD_DATA)
 parser.add_argument("--ckpt", default=None)
-parser.add_argument("--quality", default=1)
 args = parser.parse_args()
 
 print(f"Parameters: {args}")
@@ -36,7 +35,7 @@ if not (
     # whether or not we need to download the dataset
     download_pom(dataset_dir, num_images=-1 if args.big_data else 100)
 
-dataset = ImageDataset(dataset_dir, res=args.quality)
+dataset = ImageDataset(dataset_dir)
 if args.preload:
     dataset.preload()  # load everything in memory to be super fast!
 

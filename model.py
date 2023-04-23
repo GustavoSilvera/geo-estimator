@@ -8,7 +8,7 @@ from typing import Tuple, Dict, Optional, List
 batch_size: int = 32  # number of training instances happening at once (in parallel)
 seed: int = 1  # to fix the randomness
 torch.manual_seed(seed)
-epochs: int = 1000
+epochs: int = 3000
 eval_iter: int = 50
 lr: float = 0.001
 fc_dim: int = 5000  # dimensionality of the final fully connected layer
