@@ -63,7 +63,7 @@ class GeoGuesser(torch.nn.Module):
         self.network = torch.nn.Sequential(
             ConvReluBlock(in_size=c, out_size=24, kernel_size=3),
             torch.nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
-            ConvReluBlock(in_size=24, out_size=30, kernel_size=5),
+            ConvReluBlock(in_size=24, out_size=30, kernel_size=3),
             torch.nn.MaxPool2d(kernel_size=(4, 4), stride=(4, 4)),
             torch.nn.ReLU(inplace=True),
             # finall FC7 (layer)
