@@ -40,26 +40,20 @@ class GeoGuesser(torch.nn.Module):
 
         # create the network
         self.out_size = 3  # x, y, z, lat, lon, compass
-        conv_dims = [c, 8]
-        conv_kernels = [3]
-        assert len(conv_dims) == 1 + len(conv_kernels)  # includes input channels
-        conv_dims2 = [conv_dims[-1], 30]
-        conv_kernels2 = [5]
 
         class ConvReluBlock(torch.nn.Module):
-            def __init__(self, i: int, dims: List[int], kernels: List[int]):
+            def __init__(self, in_size: int, out_size: int, kernel_size: int):
                 super().__init__()
                 self.network = torch.nn.Sequential(
                     torch.nn.Conv2d(
-                        in_channels=dims[i],
-                        out_channels=dims[i + 1],
-                        kernel_size=kernels[i],
+                        in_channels=in_size,
+                        out_channels=out_size,
+                        kernel_size=kernel_size,
                         stride=1,
                         bias=False,
-                        padding=kernels[i] // 2,  # maintain shape!
+                        padding=kernel_size // 2,  # maintain shape!
                     ),
                     torch.nn.ReLU(inplace=True),
-                    # torch.nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
                 )
 
             def forward(self, x):
@@ -67,15 +61,9 @@ class GeoGuesser(torch.nn.Module):
                 return self.network.forward(x)
 
         self.network = torch.nn.Sequential(
-            *[
-                ConvReluBlock(i, conv_dims, conv_kernels)
-                for i in range(len(conv_kernels))
-            ],
+            ConvReluBlock(in_size=c, out_size=8, kernel_size=3),
             torch.nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
-            *[
-                ConvReluBlock(i, conv_dims2, conv_kernels2)
-                for i in range(len(conv_kernels2))
-            ],
+            ConvReluBlock(in_size=8, out_size=30, kernel_size=5),
             torch.nn.MaxPool2d(kernel_size=(4, 4), stride=(4, 4)),
             torch.nn.ReLU(inplace=True),
             # finall FC7 (layer)
@@ -105,7 +93,7 @@ class GeoGuesser(torch.nn.Module):
         return logits, loss
 
     def loss_function(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        B = x.shape[0] # batch size
+        B = x.shape[0]  # batch size
         assert x.shape == (B, self.out_size)
         assert y.shape == x.shape
         # xyz_pred = x[:, :3]
