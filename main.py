@@ -26,10 +26,9 @@ args = parser.parse_args()
 print(f"Parameters: {args}")
 
 # load data
-dataset_dir: str = "dataset"
+dataset_dir: str = "cities_dataset"
 if not (
     os.path.exists(dataset_dir)
-    and os.path.exists(os.path.join(dataset_dir, "xyz_cartesian.txt"))
     and os.path.exists(os.path.join(dataset_dir, "gps_compass.txt"))
 ):
     # whether or not we need to download the dataset
@@ -40,8 +39,8 @@ if args.preload:
     dataset.preload()  # load everything in memory to be super fast!
 
 # examples
-image, xyz, gps = dataset[0]  # happens to be all None!
-image, xyz, gps = dataset[56]  # non-None example
+image, gps = dataset[0]
+image, gps = dataset[56]
 
 torch.manual_seed(1)
 idxs = torch.randperm(len(dataset))
@@ -71,8 +70,8 @@ while True:
             print(f"[Loading ckpt {new_ckpt}]")
             m.load(new_ckpt)
             continue
-        image, xyz, gps = dataset[int(prompt)]
-        if image is None or xyz is None or gps is None:
+        image, gps = dataset[int(prompt)]
+        if image is None or gps is None:
             print(f"Dataset does not contrain entry @ {prompt}")
             continue
         pred, loss = m.forward(image, gps)

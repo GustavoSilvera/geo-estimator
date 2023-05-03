@@ -25,9 +25,8 @@ class ImageDataset(torch.utils.data.Dataset):
         self.dataset_size = len( #only care about images!
             glob.glob(os.path.join(data_dir, self.image_dir, "*.jpg"))
         )
-        self.xyz_cartesian = np.loadtxt(os.path.join(data_dir, "xyz_cartesian.txt"))
-        self.gps_compass = np.loadtxt(os.path.join(data_dir, "gps_compass.txt"))
-        assert len(self.xyz_cartesian) == len(self.gps_compass) >= self.dataset_size
+        self.gps_compass = np.loadtxt(os.path.join(data_dir, "gps_compass.txt"))[:,:2] # get lat,lon but ignore compass
+        assert len(self.gps_compass) >= self.dataset_size
         # get the resolution for the images
         example_im: str = os.path.join(data_dir, self.image_dir, "000001_4.jpg")
         assert os.path.exists(example_im)
@@ -85,13 +84,12 @@ class ImageDataset(torch.utils.data.Dataset):
         # use this as a running queue for fast img access time
         img_path = os.path.join(self.data_dir, self.image_dir, f"{idx:06d}_{view}.jpg")
         if not os.path.exists(img_path):
-            return None, None, None
+            return None, None
         im: torch.Tensor = self.preprocess(Image.open(img_path))
         # can't compute gradients with uint8 :((
         # im = (255 * im).type(torch.uint8)  # to uint8 to save memory (vs float32)
         # return image (tensor), tuple of cartesian coords (x, y, z), and tuple of GPS & compass (lat, long, compass)
         return (
             im.to(device),
-            torch.from_numpy(self.xyz_cartesian[idx]).type(torch.float32).to(device),
             torch.from_numpy(self.gps_compass[idx]).type(torch.float32).to(device),
         )
