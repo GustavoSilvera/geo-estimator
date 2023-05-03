@@ -72,7 +72,7 @@ def download_cities(data_dir: str):
         random[3] = random[3] * (max(pitch_bounds) - min(pitch_bounds)) + min(pitch_bounds)
         random = random.T
 
-        key: str = "AIzaSyCqgpflulg7J0TJq2zsdanmKMXqFU-3zK0"  # PUT YOUR KEY HERE
+        key: str = "INSERT API KEY"  # PUT YOUR KEY HERE
         if key is None:
             key = input("Google Maps Dev Key: ")
         params = [
