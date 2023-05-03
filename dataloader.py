@@ -36,10 +36,7 @@ class ImageDataset(torch.utils.data.Dataset):
             [
                 transforms.Resize(256),
                 transforms.CenterCrop(224),
-                transforms.ToTensor(),
-                transforms.Normalize(  # for VGG-net
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
+                transforms.ToTensor()
             ]
         )
         self.im_res = (self.preprocess(Image.open(example_im))).shape

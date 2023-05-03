@@ -3,10 +3,12 @@ import jupytext
 files = [
     "utils",  # utilities (run first)
     "gsv_query",
+    "cities",
     "pit_orl_manh",
     "dataloader",
     "model",
-    "main",
+    "cnn_main",
+    "knn_main"
 ]
 
 nb = None

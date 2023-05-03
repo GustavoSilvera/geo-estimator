@@ -28,14 +28,14 @@ GeoGuesser(
   (network): Sequential(
     (0): ConvReluBlock(
       (network): Sequential(
-        (0): Conv2d(3, 8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (0): Conv2d(3, 24, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
         (1): ReLU(inplace=True)
       )
     )
     (1): MaxPool2d(kernel_size=(2, 2), stride=(2, 2), padding=0, dilation=1, ceil_mode=False)
     (2): ConvReluBlock(
       (network): Sequential(
-        (0): Conv2d(8, 30, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), bias=False)
+        (0): Conv2d(24, 30, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
         (1): ReLU(inplace=True)
       )
     )
@@ -45,10 +45,10 @@ GeoGuesser(
     (6): Linear(in_features=23520, out_features=5000, bias=True)
     (7): Dropout(p=0.2, inplace=False)
     (8): ReLU(inplace=True)
-    (9): Linear(in_features=5000, out_features=3, bias=True)
+    (9): Linear(in_features=5000, out_features=2, bias=True)
+    (10): Tanh()
+    (11): ScaleToLatLong()
   )
-  (l2_loss): MSELoss()
-  (l1_loss): L1Loss()
 )
 ```
 
