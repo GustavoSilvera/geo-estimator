@@ -2,5 +2,4 @@ __pycache__
 dataset/
 data/
 ckpt/
-*.ipynb
 .ipynb_checkpoints
