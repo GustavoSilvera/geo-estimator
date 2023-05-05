@@ -7,7 +7,7 @@ import torch
 from sklearn.neighbors import KNeighborsRegressor
 import glob
 
-dataset_dir: str = "cities_dataset"
+dataset_dir: str = "geo-estimator-auxiliary-data/cities_dataset"
 gps_compass = np.loadtxt(os.path.join(dataset_dir, "gps_compass.txt"))
 
 def get_data(idx: int):
@@ -35,6 +35,7 @@ for i in range(dataset_size):
     img = img.flatten()
     X.append(img)
     y.append(latlng)
+    print(f"Loaded image: {i}/{dataset_size} ({100. * i / dataset_size:.2f}%)", end='\r', flush=True)
 
 N = len(X)
 
@@ -45,4 +46,11 @@ y_test = y[int(0.9*N):]
 
 neigh = KNeighborsRegressor(n_neighbors=3)
 neigh.fit(X_train, y_train)
-y_hat = neigh.predict(X_test)
+try:
+    y_hat = neigh.predict(X_test)
+except AttributeError:
+    import threadpoolctl
+    if threadpoolctl.__version__ < '3.0.0':
+        print("Error: there is a bug in threadpoolctl. Please install threadpool >=3.1.0")
+        print(f"To see more visit: https://github.com/scikit-learn/scikit-learn/issues/24238")
+    print("Failed, see logs")
