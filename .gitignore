@@ -3,3 +3,6 @@ dataset/
 data/
 ckpt/
 .ipynb_checkpoints
+geo-estimator-auxiliary-data
+.vscode
+*ckpt*
